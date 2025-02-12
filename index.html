@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Habitación con Obstáculos en Babylon.js</title>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <style>
+        body { overflow: hidden; margin: 0; padding: 0; }
+        canvas { width: 100%; height: 100%; display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("renderCanvas");
+        const engine = new BABYLON.Engine(canvas, true);
+
+        const createScene = function () {
+            const scene = new BABYLON.Scene(engine);
+            scene.collisionsEnabled = true;
+
+            // Cámara con colisiones
+            const camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(0, 1.75, 0), scene);
+            camera.attachControl(canvas, true);
+            camera.ellipsoid = new BABYLON.Vector3(0.5, 1, 0.5);
+            camera.checkCollisions = true;
+            camera.applyGravity = true;
+
+            // Luz
+            const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+
+            // Materiales
+            const groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
+            groundMaterial.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+
+            const wallMaterial = new BABYLON.StandardMaterial("wallMaterial", scene);
+            wallMaterial.diffuseColor = new BABYLON.Color3(0.8, 0.2, 0.2);
+
+            const ceilingMaterial = new BABYLON.StandardMaterial("ceilingMaterial", scene);
+            ceilingMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.8, 0.2);
+
+            // Suelo más grande
+            const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 20, height: 20 }, scene);
+            ground.material = groundMaterial;
+            ground.checkCollisions = true;
+
+            // Paredes más altas y anchas
+            const createWall = (name, position, rotation) => {
+                const wall = BABYLON.MeshBuilder.CreateBox(name, { width: 20, height: 6, depth: 0.2 }, scene);
+                wall.position = position;
+                if (rotation) wall.rotation.y = rotation;
+                wall.material = wallMaterial;
+                wall.checkCollisions = true;
+                return wall;
+            };
+
+            createWall("wall1", new BABYLON.Vector3(0, 3, -10));
+            createWall("wall2", new BABYLON.Vector3(-10, 3, 0), Math.PI / 2);
+            createWall("wall3", new BABYLON.Vector3(0, 3, 10), Math.PI);
+            createWall("wall4", new BABYLON.Vector3(10, 3, 0), -Math.PI / 2);
+
+            // Techo más grande
+            const ceiling = BABYLON.MeshBuilder.CreateGround("ceiling", { width: 20, height: 20 }, scene);
+            ceiling.position.y = 6;
+            ceiling.rotation.x = Math.PI;
+            ceiling.material = ceilingMaterial;
+            ceiling.checkCollisions = true;
+
+            // Obstáculos
+            for (let i = 0; i < 8; i++) {
+                const box = BABYLON.MeshBuilder.CreateBox("box" + i, { size: 1.5 }, scene);
+                box.position = new BABYLON.Vector3(Math.random() * 16 - 8, 0.75, Math.random() * 16 - 8);
+                box.material = new BABYLON.StandardMaterial("boxMaterial", scene);
+                box.material.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+                box.checkCollisions = true;
+            }
+
+            // Mantener la altura de la cámara
+            scene.onBeforeRenderObservable.add(() => {
+                camera.position.y = 1.75;
+            });
+
+            return scene;
+        };
+
+        const scene = createScene();
+
+        engine.runRenderLoop(() => {
+            scene.render();
+        });
+
+        window.addEventListener("resize", () => {
+            engine.resize();
+        });
+    </script>
+</body>
